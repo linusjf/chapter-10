@@ -2,11 +2,12 @@
 
 ######################################################################
 # @author      : Linus Fernandes (linusfernandes at gmail dot com)
-# @file        : toggleworkflow
+# @file        : workflow
 # @created     : Tuesday Oct 28, 2025 12:09:15 IST
 #
 # @description :
 ######################################################################
+source ./gh.sh
 
 function enable_workflow() {
   OWNER="$1"
@@ -30,4 +31,16 @@ function disable_workflow() {
     --method PUT \
     -H "Accept: application/vnd.github+json" \
     "/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW}/${ACTION}"
+}
+
+function get_workflow_id() {
+  wf="$1"
+  declare -a vals
+  get_owner_and_repo vals
+  owner="${vals[0]}"
+  repo="${vals[1]}"
+
+  id=$(gh api "repos/${owner}/${repo}/actions/workflows" \
+    | jq -r --arg wf "$wf" '.workflows[] | select(.path|endswith($wf)) | .id')
+  echo "$id"
 }
