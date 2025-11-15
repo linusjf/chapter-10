@@ -10,8 +10,9 @@
 set -u
 set -e
 
-source ./toggleworkflow.sh
+source ./workflow.sh
 source ./setreposecrets.sh
+source ./gh.sh
 
 LOCAL_MODE=false
 WORKFLOW=""
@@ -28,24 +29,26 @@ function handle_exit() {
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --local)
-      LOCAL_MODE=true
+  --local)
+    LOCAL_MODE=true
+    shift
+    ;;
+  *)
+    # First non-option argument is the workflow name
+    if [[ -z "$WORKFLOW" ]]; then
+      WORKFLOW="$1"
       shift
-      ;;
-    --workflow)
-      WORKFLOW="$2"
-      shift 2
-      ;;
-    *)
+    else
       echo "Unknown option: $1"
       exit 1
-      ;;
+    fi
+    ;;
   esac
 done
 
 function handle_local_workflow() {
   if [[ -z "$WORKFLOW" ]]; then
-    echo "❌ Workflow name must be specified with --workflow parameter"
+    echo "❌ Workflow name must be specified as a command line parameter"
     exit 1
   fi
   set_common_secrets "local"
@@ -56,20 +59,14 @@ function handle_local_workflow() {
 
 function handle_github_workflow() {
   if [[ -z "$WORKFLOW" ]]; then
-    echo "❌ Workflow name must be specified with --workflow parameter"
+    echo "❌ Workflow name must be specified as a command line parameter"
     exit 1
   fi
 
-  local remote_url=$(git remote get-url origin 2> /dev/null)
-
-  # Works for both HTTPS and SSH URLs
-  if [[ $remote_url =~ github\.com[:/](.+)/(.+)\.git ]]; then
-    owner="${BASH_REMATCH[1]}"
-    repo="${BASH_REMATCH[2]}"
-  else
-    echo "❌ Could not parse owner/repo from remote URL."
-    exit 1
-  fi
+  declare -a owner_repo
+  get_owner_and_repo owner_repo
+  owner="${owner_repo[0]}"
+  repo="${owner_repo[1]}"
 
   local actions_enabled="$(gh api "/repos/${owner}/${repo}/actions/permissions" | jq -r '.enabled')"
   disabled_manually="disabled_manually"
