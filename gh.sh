@@ -9,13 +9,13 @@
 ######################################################################
 
 function get_owner_and_repo() {
-  local -n output=$1
+  local -n _output=$1
   local remote_url=$(git remote get-url origin 2> /dev/null)
   # Works for both HTTPS and SSH URLs
   if [[ $remote_url =~ github\.com[:/](.+)/(.+)\.git ]]; then
     owner="${BASH_REMATCH[1]}"
     repo="${BASH_REMATCH[2]}"
-    export output=("$owner" "$repo")
+    _output=("$owner" "$repo")
   else
     echo "❌ Could not parse owner/repo from remote URL." >&2
     exit 1

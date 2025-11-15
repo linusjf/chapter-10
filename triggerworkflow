@@ -16,18 +16,19 @@ source ./gh.sh
 
 LOCAL_MODE=false
 WORKFLOW=""
+WORKFLOW_ID=""
 
 trap handle_exit EXIT
 
 function handle_exit() {
-  if [[ "$LOCAL_MODE" == false ]] && [[ -n "$WORKFLOW" ]]; then
+  if [[ "$LOCAL_MODE" == false ]] && [[ -n "$WORKFLOW" ]] && [[ -n "$WORKFLOW_ID" ]]; then
     disable_workflow "$owner" "$repo" "$WORKFLOW"
   fi
   echo "DON'T FORGET TO DESTROY AZURE RESOURCES WHEN DONE USING terraform destroy"
 }
 
 function show_help() {
-  cat << EOF
+  cat <<EOF
 Usage: $0 [OPTIONS] WORKFLOW_NAME
 
 Trigger a GitHub Actions workflow.
@@ -72,6 +73,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+WORKFLOW_ID="$(get_workflow_id "$WORKFLOW")"
+if [[ -z "${WORKFLOW_ID}" ]]; then
+  echo "${WORKFLOW} file does not exist." >&2
+  exit 1
+fi
+
 function handle_local_workflow() {
   if [[ -z "$WORKFLOW" ]]; then
     echo "❌ Workflow name must be specified as a command line parameter"
@@ -99,7 +106,7 @@ function handle_github_workflow() {
   local actions_enabled="$(gh api "/repos/${owner}/${repo}/actions/permissions" | jq -r '.enabled')"
   disabled_manually="disabled_manually"
   if "$actions_enabled"; then
-    local state=$(gh api "repos/${owner}/${repo}/actions/workflows/${WORKFLOW}" | jq -r '.state')
+    local state=$(gh api "repos/${owner}/${repo}/actions/workflows/${WORKFLOW_ID}" | jq -r '.state')
     if [[ $state == "$disabled_manually" ]]; then
       enable_workflow "$owner" "$repo" "$WORKFLOW"
     fi
