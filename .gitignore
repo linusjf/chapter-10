@@ -3,3 +3,4 @@ todo.txt
 commit.txt
 *.bak
 mock-storage/storage
+.aider*
