@@ -26,12 +26,37 @@ function handle_exit() {
   echo "DON'T FORGET TO DESTROY AZURE RESOURCES WHEN DONE USING terraform destroy"
 }
 
+function show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS] WORKFLOW_NAME
+
+Trigger a GitHub Actions workflow.
+
+OPTIONS:
+  --local     Run the workflow locally using act instead of on GitHub
+  --help      Show this help message and exit
+
+ARGUMENTS:
+  WORKFLOW_NAME   Name of the workflow file to run (e.g., deploy.yaml)
+
+EXAMPLES:
+  $0 deploy.yaml                    # Run deploy.yaml workflow on GitHub
+  $0 --local deploy.yaml            # Run deploy.yaml workflow locally with act
+  $0 --help                         # Show this help message
+
+EOF
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
   --local)
     LOCAL_MODE=true
     shift
+    ;;
+  --help)
+    show_help
+    exit 0
     ;;
   *)
     # First non-option argument is the workflow name
@@ -40,6 +65,7 @@ while [[ $# -gt 0 ]]; do
       shift
     else
       echo "Unknown option: $1"
+      show_help
       exit 1
     fi
     ;;
@@ -49,6 +75,7 @@ done
 function handle_local_workflow() {
   if [[ -z "$WORKFLOW" ]]; then
     echo "❌ Workflow name must be specified as a command line parameter"
+    show_help
     exit 1
   fi
   set_common_secrets "local"
@@ -60,6 +87,7 @@ function handle_local_workflow() {
 function handle_github_workflow() {
   if [[ -z "$WORKFLOW" ]]; then
     echo "❌ Workflow name must be specified as a command line parameter"
+    show_help
     exit 1
   fi
 
