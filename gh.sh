@@ -9,6 +9,7 @@
 ######################################################################
 
 function get_owner_and_repo() {
+  # shellcheck disable=SC2178
   local -n _output=$1
   local remote_url=$(git remote get-url origin 2> /dev/null)
   # Works for both HTTPS and SSH URLs
