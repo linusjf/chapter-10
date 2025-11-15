@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+######################################################################
+# @author      : Linus Fernandes (linusfernandes at gmail dot com)
+# @file        : triggerworkflow
+# @created     : Tuesday Oct 28, 2025 15:47:52 IST
+#
+# @description :
+######################################################################
+set -u
+set -e
+
+source ./toggleworkflow.sh
+source ./setreposecrets.sh
+
+LOCAL_MODE=false
+
+trap handle_exit EXIT
+
+function handle_exit() {
+  if [[ "$LOCAL_MODE" == false ]]; then
+    disable_workflow "$owner" "$repo" "$workflow"
+  fi
+  echo "DON'T FORGET TO DESTROY AZURE RESOURCES WHEN DONE USING terraform destroy"
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --local)
+      LOCAL_MODE=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
+function handle_local_workflow() {
+  set_common_secrets "local"
+  echo "Secrets stored locally in .secrets file"
+  echo "Running workflow locally with act..."
+  act push --secret-file .secrets
+}
+
+function handle_github_workflow() {
+  local remote_url=$(git remote get-url origin 2> /dev/null)
+
+  # Works for both HTTPS and SSH URLs
+  if [[ $remote_url =~ github\.com[:/](.+)/(.+)\.git ]]; then
+    owner="${BASH_REMATCH[1]}"
+    repo="${BASH_REMATCH[2]}"
+  else
+    echo "❌ Could not parse owner/repo from remote URL."
+    exit 1
+  fi
+
+  local actions_enabled="$(gh api "/repos/${owner}/${repo}/actions/permissions" | jq -r '.enabled')"
+  workflow="deploy.yaml" # or workflow ID
+  disabled_manually="disabled_manually"
+  if "$actions_enabled"; then
+    local state=$(gh api "repos/${owner}/${repo}/actions/workflows/${workflow}" | jq -r '.state')
+    if [[ $state == "$disabled_manually" ]]; then
+      enable_workflow "$owner" "$repo" "$workflow"
+    fi
+
+    set_common_secrets "github"
+    gh workflow run "$workflow"
+    echo "Waiting for 90 seconds before disabling workflow..."
+    sleep 90
+  else
+    echo "Actions are not enabled on this repo."
+    return 1
+  fi
+}
+
+if [[ "$LOCAL_MODE" == true ]]; then
+  handle_local_workflow
+else
+  handle_github_workflow
+fi
