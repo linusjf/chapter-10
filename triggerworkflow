@@ -44,6 +44,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 function handle_local_workflow() {
+  if [[ -z "$WORKFLOW" ]]; then
+    echo "❌ Workflow name must be specified with --workflow parameter"
+    exit 1
+  fi
   set_common_secrets "local"
   echo "Secrets stored locally in .secrets file"
   echo "Running workflow locally with act..."
@@ -51,6 +55,11 @@ function handle_local_workflow() {
 }
 
 function handle_github_workflow() {
+  if [[ -z "$WORKFLOW" ]]; then
+    echo "❌ Workflow name must be specified with --workflow parameter"
+    exit 1
+  fi
+
   local remote_url=$(git remote get-url origin 2> /dev/null)
 
   # Works for both HTTPS and SSH URLs
@@ -60,11 +69,6 @@ function handle_github_workflow() {
   else
     echo "❌ Could not parse owner/repo from remote URL."
     exit 1
-  fi
-
-  # If workflow not specified via command line, use default
-  if [[ -z "$WORKFLOW" ]]; then
-    WORKFLOW="deploy.yaml"
   fi
 
   local actions_enabled="$(gh api "/repos/${owner}/${repo}/actions/permissions" | jq -r '.enabled')"
