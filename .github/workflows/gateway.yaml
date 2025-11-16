@@ -35,11 +35,22 @@ jobs:
       CONTAINER_REGISTRY: ${{ secrets.CONTAINER_REGISTRY }}
       REGISTRY_UN: ${{ secrets.REGISTRY_UN }}
       REGISTRY_PW: ${{ secrets.REGISTRY_PW  }}
+      LOCAL_DEPLOY: ${{ secrets.LOCAL_DEPLOY  }}
       NAME: gateway
       DIRECTORY: gateway
 
     steps:
 
+      #
+      # Install envsubst. (local only)
+      #
+      - name: Install envsubst
+        if: ${{ env.LOCAL_DEPLOY == 'true' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+
+      #
       # Checks-out your repository under $GITHUB_WORKSPACE.
       - uses: actions/checkout@v3
 
@@ -55,7 +66,6 @@ jobs:
       - name: Publish
         run: ./scripts/cd/push-image.sh
 
-      #
       # Installs Kubectl and connects it to the cluster.
       #
       # https://github.com/marketplace/actions/kubernetes-cli-kubectl
