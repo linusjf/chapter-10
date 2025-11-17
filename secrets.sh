@@ -64,6 +64,7 @@ function set_common_secrets() {
       gh secret set "REGISTRY_UN" --body "$REGISTRY_UN"
       gh secret set "REGISTRY_PW" --body "$registry_pw"
       gh secret set "KUBE_CONFIG" --body "$kube_config_base64"
+      gh secret set "LOCAL_DEPLOY" --body "false"
     fi
   else
     echo "Resource group ${RESOURCE_GROUP} does not exist. Setting repo secrets is not executed."

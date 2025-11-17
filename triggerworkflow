@@ -11,7 +11,7 @@ set -u
 set -e
 
 source ./workflow.sh
-source ./setreposecrets.sh
+source ./secrets.sh
 source ./gh.sh
 
 LOCAL_MODE=false
@@ -28,7 +28,7 @@ function handle_exit() {
 }
 
 function show_help() {
-  cat <<EOF
+  cat << EOF
 Usage: $0 [OPTIONS] WORKFLOW_NAME
 
 Trigger a GitHub Actions workflow.
@@ -51,25 +51,25 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-  --local)
-    LOCAL_MODE=true
-    shift
-    ;;
-  --help)
-    show_help
-    exit 0
-    ;;
-  *)
-    # First non-option argument is the workflow name
-    if [[ -z "$WORKFLOW" ]]; then
-      WORKFLOW="$1"
+    --local)
+      LOCAL_MODE=true
       shift
-    else
-      echo "Unknown option: $1"
+      ;;
+    --help)
       show_help
-      exit 1
-    fi
-    ;;
+      exit 0
+      ;;
+    *)
+      # First non-option argument is the workflow name
+      if [[ -z "$WORKFLOW" ]]; then
+        WORKFLOW="$1"
+        shift
+      else
+        echo "Unknown option: $1"
+        show_help
+        exit 1
+      fi
+      ;;
   esac
 done
 
