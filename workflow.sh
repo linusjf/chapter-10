@@ -44,3 +44,18 @@ function get_workflow_id() {
     | jq -r --arg wf "$wf" '.workflows[] | select(.path|endswith($wf)) | .id')
   echo "$id"
 }
+
+function list_workflows() {
+  declare -a vals
+  get_owner_and_repo vals
+  owner="${vals[0]}"
+  repo="${vals[1]}"
+
+  echo "Available workflows for ${owner}/${repo}:"
+  echo ""
+  
+  # Get workflows and format as table
+  gh api "repos/${owner}/${repo}/actions/workflows" \
+    | jq -r '.workflows[] | [.name, .path, .state] | @tsv' \
+    | column -t -s $'\t' -N "Workflow Name,File Path,State"
+}
