@@ -56,6 +56,6 @@ function list_workflows() {
   
   # Get workflows and format as table
   gh api "repos/${owner}/${repo}/actions/workflows" \
-    | jq -r '.workflows[] | [.name, .path, .state] | @tsv' \
-    | column -t -s $'\t' -N "Workflow Name,File Path,State"
+    | jq -r '.workflows[] | [.id, .name, .path, .state] | @tsv' \
+    | column -t -s $'\t' -N "Workflow ID,Workflow Name,File Path,State"
 }
