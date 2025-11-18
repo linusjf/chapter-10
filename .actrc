@@ -1,1 +1,2 @@
--P ubuntu-latest=ghcr.io/catthehacker/ubuntu:js-latest
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest
+--container-options=--network=host
