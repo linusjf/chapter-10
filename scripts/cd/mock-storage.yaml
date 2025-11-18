@@ -4,6 +4,8 @@
 # kubectl apply -f scripts/deploy.yaml
 #
 #
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,13 +20,13 @@ spec:
       labels:
         app: video-storage
     spec:
-      containers: 
-      - name: video-storage
-        image: $CONTAINER_REGISTRY/mock-storage:$VERSION
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: PORT
-          value: "4000"
+      containers:
+        - name: video-storage
+          image: $CONTAINER_REGISTRY/mock-storage:$VERSION
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PORT
+              value: "4000"
 ---
 apiVersion: v1
 kind: Service

@@ -4,6 +4,8 @@
 # kubectl apply -f scripts/deploy.yaml
 #
 #
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,10 +20,10 @@ spec:
       labels:
         app: mongodb
     spec:
-      containers: 
-      - name: mongodb
-        image: mongo:7.0.0
-        imagePullPolicy: Always
+      containers:
+        - name: mongodb
+          image: mongo:7.0.0
+          imagePullPolicy: Always
 ---
 apiVersion: v1
 kind: Service

@@ -4,6 +4,8 @@
 # kubectl apply -f scripts/deploy.yaml
 #
 #
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,15 +20,15 @@ spec:
       labels:
         app: rabbit
     spec:
-      containers: 
-      - name: rabbit
-        image: rabbitmq:3.12.4-management
-        imagePullPolicy: Always
-        env:
-        - name: RABBITMQ_DEFAULT_USER
-          value: test
-        - name: RABBITMQ_DEFAULT_PASS
-          value: test
+      containers:
+        - name: rabbit
+          image: rabbitmq:3.12.4-management
+          imagePullPolicy: Always
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: test
+            - name: RABBITMQ_DEFAULT_PASS
+              value: test
 
 ---
 apiVersion: v1
