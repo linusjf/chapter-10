@@ -81,7 +81,7 @@ jobs:
         if: ${{ env.LOCAL_DEPLOY == 'true' }}
         run: |
           mkdir -p ~/.kube
-           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
 
       #
       # Expands the configuration template and deploys the microservice.

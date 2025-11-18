@@ -36,6 +36,7 @@ jobs:
       CONTAINER_REGISTRY: ${{ secrets.CONTAINER_REGISTRY }}
       REGISTRY_UN: ${{ secrets.REGISTRY_UN }}
       REGISTRY_PW: ${{ secrets.REGISTRY_PW  }}
+      LOCAL_DEPLOY: ${{ secrets.LOCAL_DEPLOY  }}
       NAME: mock-storage
       DIRECTORY: mock-storage
 
@@ -56,18 +57,43 @@ jobs:
       - name: Publish
         run: ./scripts/cd/push-image.sh
 
-      #
       # Installs Kubectl and connects it to the cluster.
       #
       # https://github.com/marketplace/actions/kubernetes-cli-kubectl
       #
       - uses: tale/kubectl-action@v1
+        if: ${{ env.LOCAL_DEPLOY == 'false' }}
         with:
           base64-kube-config: ${{ secrets.KUBE_CONFIG }}
-          kubectl-version: v1.24.2
+          kubectl-version: v1.34.1
+      #
+      # Install kubectl (works in GitHub Actions AND act)
+      #
+      - name: Install kubectl
+        if: ${{ env.LOCAL_DEPLOY == 'true' }}
+        run: |
+          echo "Installing kubectl v1.34.1"
+          curl -L -o kubectl "https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+      - name: Setup kubeconfig
+        if: ${{ env.LOCAL_DEPLOY == 'true' }}
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
 
       #
       # Expands the configuration template and deploys the microservice.
       #
       - name: Deploy
         run: ./scripts/cd/deploy.sh
+
+      #
+      # (Optional) Debug cluster
+      #
+      - name: Test Kubernetes cluster access
+        run: |
+          kubectl get pods
+          kubectl get deploy
+          kubectl get services
