@@ -39,6 +39,7 @@ jobs:
       LOCAL_DEPLOY: ${{ secrets.LOCAL_DEPLOY  }}
       NAME: history
       DIRECTORY: history
+      KUBECTL_VERSION: "v1.34.1"
 
     steps:
 
@@ -65,15 +66,15 @@ jobs:
         if: ${{ env.LOCAL_DEPLOY == 'false' }}
         with:
           base64-kube-config: ${{ secrets.KUBE_CONFIG }}
-          kubectl-version: v1.34.1
+          kubectl-version: ${{ env.KUBECTL_VERSION }}
       #
       # Install kubectl (works in GitHub Actions AND act)
       #
       - name: Install kubectl
         if: ${{ env.LOCAL_DEPLOY == 'true' }}
         run: |
-          echo "Installing kubectl v1.34.1"
-          curl -L -o kubectl "https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl"
+          echo "Installing kubectl $KUBECTL_VERSION"
+          curl -L -o kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/kubectl
           kubectl version --client
