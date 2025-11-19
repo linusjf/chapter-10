@@ -18,6 +18,7 @@ LOCAL_MODE=false
 WORKFLOW=""
 WORKFLOW_ID=""
 WORKFLOW_TRIGGERED=false
+EVENT="workflow_dispatch"
 
 trap handle_exit EXIT
 
@@ -92,7 +93,7 @@ function handle_local_workflow() {
   set_common_secrets "local"
   echo "Secrets stored locally in .secrets file"
   echo "Running workflow locally with act..."
-  act push --secret-file .secrets
+  act "$EVENT" -W ".github/workflows/${WORKFLOW}" --secret-file .secrets
   WORKFLOW_TRIGGERED=true
 }
 
