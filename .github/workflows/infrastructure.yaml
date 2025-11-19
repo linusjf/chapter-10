@@ -19,6 +19,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      LOCAL_DEPLOY: ${{ secrets.LOCAL_DEPLOY  }}
+      KUBECTL_VERSION: "v1.34.1"
+
     steps:
 
       # Checks-out your repository under $GITHUB_WORKSPACE.
@@ -30,9 +34,26 @@ jobs:
       # https://github.com/marketplace/actions/kubernetes-cli-kubectl
       #
       - uses: tale/kubectl-action@v1
+        if: ${{ env.LOCAL_DEPLOY == 'false' }}
         with:
           base64-kube-config: ${{ secrets.KUBE_CONFIG }}
-          kubectl-version: v1.24.2
+          kubectl-version: ${{ env.KUBECTL_VERSION }}
+      #
+      # Install kubectl (works in GitHub Actions AND act)
+      #
+      - name: Install kubectl
+        if: ${{ env.LOCAL_DEPLOY == 'true' }}
+        run: |
+          echo "Installing kubectl $KUBECTL_VERSION"
+          curl -L -o kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+      - name: Setup kubeconfig
+        if: ${{ env.LOCAL_DEPLOY == 'true' }}
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
 
       #
       # Deploys MongoDB.
