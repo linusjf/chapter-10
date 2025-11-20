@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ---------- CONFIGURE THIS ----------
+GITHUB_USER="linusjf"
+
+# List ONLY the directories you want to extract
+DIRS=(
+  "gateway"
+  "history"
+  "metadata"
+  "azure-storage"
+  "video-upload"
+  "video-streaming"
+)
+# ------------------------------------
+
+for dir in "${DIRS[@]}"; do
+  echo "============================================"
+  echo "Processing directory: $dir"
+  echo "============================================"
+
+  # Check directory exists
+  if [ ! -d "$dir" ]; then
+    echo "⚠️  Directory '$dir' does NOT exist in this repo — skipping."
+    continue
+  fi
+
+  split_branch="${dir}-split"
+
+  echo "🪓 Splitting history for $dir ..."
+  git subtree split -P "$dir" -b "$split_branch"
+
+  echo "📦 Creating GitHub repo: $dir ..."
+  gh repo create "$dir" --private
+
+  echo "🔗 Adding remote ..."
+  git remote add "$dir" "git@github.com:${GITHUB_USER}/${dir}.git" || true
+
+  echo "⬆️  Pushing split history to new repo ..."
+  git push "$dir" "$split_branch:main"
+
+  echo "🧹 Cleaning temporary split branch ..."
+  git branch -D "$split_branch"
+
+  echo "✔️ Finished: $dir"
+  echo
+done
+
+echo "🎉 All selected directories processed!"
