@@ -19,6 +19,7 @@ WORKFLOW=""
 WORKFLOW_ID=""
 WORKFLOW_TRIGGERED=false
 EVENT="workflow_dispatch"
+ENVIRONMENT=""
 
 trap handle_exit EXIT
 
@@ -38,8 +39,9 @@ Usage: $0 [OPTIONS] WORKFLOW_NAME
 Trigger a GitHub Actions workflow.
 
 OPTIONS:
-  --local     Run the workflow locally using act instead of on GitHub
-  --help      Show this help message and exit
+  --local          Run the workflow locally using act instead of on GitHub
+  --environment    Specify the environment for the workflow (e.g., staging, production)
+  --help           Show this help message and exit
 
 ARGUMENTS:
   WORKFLOW_NAME   Name of the workflow file to run (e.g., deploy.yaml)
@@ -47,6 +49,7 @@ ARGUMENTS:
 EXAMPLES:
   $0 deploy.yaml                    # Run deploy.yaml workflow on GitHub
   $0 --local deploy.yaml            # Run deploy.yaml workflow locally with act
+  $0 --environment staging deploy.yaml # Run deploy.yaml with staging environment
   $0 --help                         # Show this help message
 
 EOF
@@ -58,6 +61,10 @@ while [[ $# -gt 0 ]]; do
     --local)
       LOCAL_MODE=true
       shift
+      ;;
+    --environment)
+      ENVIRONMENT="$2"
+      shift 2
       ;;
     --help)
       show_help
@@ -90,7 +97,7 @@ function handle_local_workflow() {
     show_help
     exit 1
   fi
-  set_common_secrets "local"
+  set_common_secrets "local" "$ENVIRONMENT"
   echo "Secrets stored locally in .secrets file"
   echo "Running workflow locally with act..."
   act "$EVENT" -W ".github/workflows/${WORKFLOW}" --secret-file .secrets
@@ -117,7 +124,7 @@ function handle_github_workflow() {
       enable_workflow "$owner" "$repo" "$WORKFLOW"
     fi
 
-    set_common_secrets "github"
+    set_common_secrets "github" "$ENVIRONMENT"
     gh workflow run "$WORKFLOW"
     WORKFLOW_TRIGGERED=true
     echo "Waiting for 90 seconds before disabling workflow..."
