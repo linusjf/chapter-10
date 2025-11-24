@@ -16,19 +16,33 @@ ACR_NAME="linusjfflixtube"
 AKS_NAME="flixtube"
 
 function get_registry_password() {
-  az acr credential show \
-    --name "$ACR_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --query "passwords[0].value" \
-    --output tsv
+  env="${1:-}"
+  if [[ -n "$env" ]]; then
+    az acr credential show \
+      --name "$ACR_NAME" \
+      --resource-group "${RESOURCE_GROUP}-${env}" \
+      --query "passwords[0].value" \
+      --output tsv
+  else
+    az acr credential show \
+      --name "$ACR_NAME" \
+      --resource-group "$RESOURCE_GROUP" \
+      --query "passwords[0].value" \
+      --output tsv
+  fi
 }
 
 function get_kube_config() {
+  env="${1:-}"
   # Backup current kube config
   mv ~/.kube/config ~/.kube/config.bak
 
   # Get AKS credentials
-  az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME"
+  if [[ -n "$env" ]]; then
+    az aks get-credentials --resource-group "${RESOURCE_GROUP}-${env}" --name "${AKS_NAME}-${env}"
+  else
+    az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME"
+  fi
 
   # Base64 encode kube config and remove newlines
   base64 < ~/.kube/config | tr -d '\n'
@@ -40,13 +54,21 @@ function resource_group_exists() {
 
 function set_common_secrets() {
   local mode="$1"
+  local env="${2:-}"
 
-  if [[ "$(resource_group_exists "$RESOURCE_GROUP")" == "true" ]]; then
+  exists="false"
+  if [[ -n "$env" ]]; then
+    exists=$(resource_group_exists "${RESOURCE_GROUP}-${env}")
+  else
+    exists=$(resource_group_exists "${RESOURCE_GROUP}")
+  fi
+
+  if [[ $exists == "true" ]]; then
     # Get secrets
     local registry_pw
-    registry_pw=$(get_registry_password)
+    registry_pw="$(get_registry_password "$env")"
     local kube_config_base64
-    kube_config_base64=$(get_kube_config)
+    kube_config_base64="$(get_kube_config "${env}")"
 
     if [[ "$mode" == "local" ]]; then
       # Store to .secrets file
