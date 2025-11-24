@@ -12,9 +12,16 @@ metadata:
   name: metadata
 spec:
   replicas: 1
+  minReplicas: 3
+  maxReplicas: 5
   selector:
     matchLabels:
       app: metadata
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
