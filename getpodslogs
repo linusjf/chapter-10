@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Optional: specify namespace as the first argument
+NAMESPACE="${1:-default}"
+
+echo "Fetching pods in namespace: $NAMESPACE"
+pods=$(kubectl get pods -n "$NAMESPACE" --no-headers -o custom-columns=":metadata.name")
+
+for pod in $pods; do
+  echo "--------------------------------------------"
+  echo "Logs for pod: $pod"
+  echo "--------------------------------------------"
+  kubectl logs -n "$NAMESPACE" "$pod"
+  echo
+done
