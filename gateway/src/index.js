@@ -10,6 +10,16 @@ if (!process.env.PORT) {
 
 const PORT = process.env.PORT;
 
+const health = {
+  initialized: false,
+  markInitialized() {
+    this.initialized = true;
+  },
+  isReady() {
+    return this.initialized;
+  },
+};
+
 //
 // Application entry point.
 //
@@ -37,7 +47,7 @@ async function main() {
   });
 
   app.get("/ready", (req, res) => {
-    res.sendStatus(200);
+    res.sendStatus(health.isInitialized() ? 200 : 503);
   });
 
   //
@@ -112,6 +122,7 @@ async function main() {
 
   app.listen(PORT, () => {
     console.log("Microservice online.");
+    health.markInitialized();
   });
 }
 
