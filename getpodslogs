@@ -5,6 +5,31 @@ RESOURCE_GROUP="${1:-flixtube}"
 NAMESPACE="${2:-default}"
 PREVIOUS=false
 
+function show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
+
+Retrieve logs from Kubernetes pods in an AKS cluster.
+
+ARGUMENTS:
+  RESOURCE_GROUP  Azure resource group name (default: flixtube)
+  NAMESPACE       Kubernetes namespace (default: default)
+
+OPTIONS:
+  --previous      Retrieve logs from previous pod instances
+  --help          Show this help message and exit
+
+EXAMPLES:
+  $0                              # Get current logs from flixtube/default
+  $0 --previous                   # Get previous logs from flixtube/default
+  $0 myresourcegroup              # Get logs from myresourcegroup/default
+  $0 myresourcegroup mynamespace  # Get logs from myresourcegroup/mynamespace
+  $0 myresourcegroup mynamespace --previous  # Get previous logs
+  $0 --help                       # Show this help message
+
+EOF
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -12,11 +37,15 @@ while [[ $# -gt 0 ]]; do
       PREVIOUS=true
       shift
       ;;
+    --help)
+      show_help
+      exit 0
+      ;;
     *)
       # Handle positional arguments for resource group and namespace
-      if [[ -z "$RESOURCE_GROUP" ]]; then
+      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
         RESOURCE_GROUP="$1"
-      elif [[ -z "$NAMESPACE" ]]; then
+      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
         NAMESPACE="$1"
       fi
       shift
