@@ -53,17 +53,17 @@ for pod in $pods; do
   echo "============================================"
   echo "Detailed Information for Pod: $pod"
   echo "============================================"
-  
+
   echo ""
   echo "--- kubectl get pod $pod -o yaml ---"
   echo ""
   kubectl get pod "$pod" -n "$NAMESPACE" -o yaml
-  
+
   echo ""
   echo "--- kubectl describe pod $pod ---"
   echo ""
   kubectl describe pod "$pod" -n "$NAMESPACE"
-  
+
   echo ""
   echo "============================================"
   echo "End of information for pod: $pod"
