@@ -47,7 +47,7 @@ async function main() {
   });
 
   app.get("/ready", (req, res) => {
-    res.sendStatus(health.isInitialized() ? 200 : 503);
+    res.sendStatus(health.isReady() ? 200 : 503);
   });
 
   //
