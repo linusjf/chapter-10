@@ -112,7 +112,7 @@ async function main() {
   app.get("/alive", (_, res) => res.sendStatus(200));
 
   app.get("/ready", (_, res) => {
-    res.sendStatus(health.isInitialized() ? 200 : 503);
+    res.sendStatus(health.isReady() ? 200 : 503);
   });
   //
   // HTTP GET route to retrieve video viewing history.
