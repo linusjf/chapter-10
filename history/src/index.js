@@ -52,6 +52,11 @@ async function main() {
   //
   app.use(express.json());
 
+  app.get("/alive", (_, res) => res.sendStatus(200));
+
+  app.get("/ready", (_, res) => {
+    res.sendStatus(health.isReady() ? 200 : 503);
+  });
   //
   // Connects to the database server.
   //
@@ -109,11 +114,6 @@ async function main() {
     messageChannel.ack(msg); // If there is no error, acknowledge the message.
   });
 
-  app.get("/alive", (_, res) => res.sendStatus(200));
-
-  app.get("/ready", (_, res) => {
-    res.sendStatus(health.isReady() ? 200 : 503);
-  });
   //
   // HTTP GET route to retrieve video viewing history.
   //
