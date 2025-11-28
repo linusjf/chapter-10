@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+RESOURCE_GROUP="${1:-flixtube}"
+NAMESPACE="${2:-default}"
+
+function show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
+
+Retrieve detailed information for Kubernetes pods in an AKS cluster.
+
+ARGUMENTS:
+  RESOURCE_GROUP  Azure resource group name (default: flixtube)
+  NAMESPACE       Kubernetes namespace (default: default)
+
+OPTIONS:
+  --help          Show this help message and exit
+
+EXAMPLES:
+  $0                              # Get pod info from flixtube/default
+  $0 myresourcegroup              # Get pod info from myresourcegroup/default
+  $0 myresourcegroup mynamespace  # Get pod info from myresourcegroup/mynamespace
+  $0 --help                       # Show this help message
+
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      # Handle positional arguments for resource group and namespace
+      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
+        RESOURCE_GROUP="$1"
+      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
+        NAMESPACE="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
+
+echo "Fetching pods in namespace: $NAMESPACE"
+pods=$(kubectl get pods -n "$NAMESPACE" --no-headers -o custom-columns=":metadata.name")
+
+for pod in $pods; do
+  echo "============================================"
+  echo "Detailed Information for Pod: $pod"
+  echo "============================================"
+  
+  echo ""
+  echo "--- kubectl get pod $pod -o yaml ---"
+  echo ""
+  kubectl get pod "$pod" -n "$NAMESPACE" -o yaml
+  
+  echo ""
+  echo "--- kubectl describe pod $pod ---"
+  echo ""
+  kubectl describe pod "$pod" -n "$NAMESPACE"
+  
+  echo ""
+  echo "============================================"
+  echo "End of information for pod: $pod"
+  echo "============================================"
+  echo ""
+done
