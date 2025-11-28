@@ -3,6 +3,26 @@
 RESOURCE_GROUP="${1:-flixtube}"
 # Optional: specify namespace as the second argument
 NAMESPACE="${2:-default}"
+PREVIOUS=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --previous)
+      PREVIOUS=true
+      shift
+      ;;
+    *)
+      # Handle positional arguments for resource group and namespace
+      if [[ -z "$RESOURCE_GROUP" ]]; then
+        RESOURCE_GROUP="$1"
+      elif [[ -z "$NAMESPACE" ]]; then
+        NAMESPACE="$1"
+      fi
+      shift
+      ;;
+  esac
+done
 
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
 
@@ -11,8 +31,14 @@ pods=$(kubectl get pods -n "$NAMESPACE" --no-headers -o custom-columns=":metadat
 
 for pod in $pods; do
   echo "--------------------------------------------"
-  echo "Logs for pod: $pod"
-  echo "--------------------------------------------"
-  kubectl logs -n "$NAMESPACE" "$pod"
+  if [[ "$PREVIOUS" == true ]]; then
+    echo "Logs for pod (previous instance): $pod"
+    echo "--------------------------------------------"
+    kubectl logs -n "$NAMESPACE" "$pod" --previous
+  else
+    echo "Logs for pod: $pod"
+    echo "--------------------------------------------"
+    kubectl logs -n "$NAMESPACE" "$pod"
+  fi
   echo
 done
