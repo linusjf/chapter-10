@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+RESOURCE_GROUP="${1:-flixtube}"
+NAMESPACE="${2:-default}"
+
+function show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
+
+Retrieve detailed information for Kubernetes services in an AKS cluster.
+
+ARGUMENTS:
+  RESOURCE_GROUP  Azure resource group name (default: flixtube)
+  NAMESPACE       Kubernetes namespace (default: default)
+
+OPTIONS:
+  --help          Show this help message and exit
+
+EXAMPLES:
+  $0                              # Get service info from flixtube/default
+  $0 myresourcegroup              # Get service info from myresourcegroup/default
+  $0 myresourcegroup mynamespace  # Get service info from myresourcegroup/mynamespace
+  $0 --help                       # Show this help message
+
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      # Handle positional arguments for resource group and namespace
+      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
+        RESOURCE_GROUP="$1"
+      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
+        NAMESPACE="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
+
+echo "Fetching services in namespace: $NAMESPACE"
+services=$(kubectl get services -n "$NAMESPACE" --no-headers -o custom-columns=":metadata.name")
+
+for service in $services; do
+  echo "============================================"
+  echo "Detailed Information for Service: $service"
+  echo "============================================"
+
+  echo ""
+  echo "--- kubectl get service $service -o yaml ---"
+  echo ""
+  kubectl get service "$service" -n "$NAMESPACE" -o yaml
+
+  echo ""
+  echo "--- kubectl describe service $service ---"
+  echo ""
+  kubectl describe service "$service" -n "$NAMESPACE"
+
+  echo ""
+  echo "============================================"
+  echo "End of information for service: $service"
+  echo "============================================"
+  echo ""
+done
