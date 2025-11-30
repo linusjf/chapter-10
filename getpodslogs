@@ -53,21 +53,28 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if ! command -V kubectl &> /dev/null; then
+  "kubectl is not installed or available"
+fi
+
+if ! command -V az &> /dev/null; then
+  "az is not installed or available"
+fi
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
 
 echo "Fetching pods in namespace: $NAMESPACE"
-pods=$(kubectl get pods -n "$NAMESPACE" --no-headers -o custom-columns=":metadata.name")
+pods=$(kubectl get pods --no-headers -o custom-columns=":metadata.name")
 
 for pod in $pods; do
   echo "--------------------------------------------"
   if [[ "$PREVIOUS" == true ]]; then
     echo "Logs for pod (previous instance): $pod"
     echo "--------------------------------------------"
-    kubectl logs -n "$NAMESPACE" "$pod" --previous
+    kubectl logs "$pod" --previous
   else
     echo "Logs for pod: $pod"
     echo "--------------------------------------------"
-    kubectl logs -n "$NAMESPACE" "$pod"
+    kubectl logs "$pod"
   fi
   echo
 done
