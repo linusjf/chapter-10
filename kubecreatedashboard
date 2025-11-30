@@ -4,7 +4,7 @@ RESOURCE_GROUP="${1:-flixtube}"
 NAMESPACE="${2:-default}"
 
 function show_help() {
-  cat <<EOF
+  cat << EOF
 Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
 
 Deploy Kubernetes Dashboard to an AKS cluster and set up admin access.
@@ -28,27 +28,27 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-  --help)
-    show_help
-    exit 0
-    ;;
-  *)
-    # Handle positional arguments for resource group and namespace
-    if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
-      RESOURCE_GROUP="$1"
-    elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
-      NAMESPACE="$1"
-    fi
-    shift
-    ;;
+    --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      # Handle positional arguments for resource group and namespace
+      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
+        RESOURCE_GROUP="$1"
+      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
+        NAMESPACE="$1"
+      fi
+      shift
+      ;;
   esac
 done
 
-if ! command -V kubectl &>/dev/null; then
+if ! command -V kubectl &> /dev/null; then
   "kubectl is not installed or available"
 fi
 
-if ! command -V az &>/dev/null; then
+if ! command -V az &> /dev/null; then
   "az is not installed or available"
 fi
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
@@ -64,5 +64,7 @@ kubectl -n kubernetes-dashboard get svc
 kubectl apply -f dashboard-adminuser.yaml
 
 kubectl -n kubernetes-dashboard create token admin-user
+
+kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d
 
 kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard 8443:443
