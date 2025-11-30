@@ -4,7 +4,7 @@ RESOURCE_GROUP="${1:-flixtube}"
 NAMESPACE="${2:-default}"
 
 function show_help() {
-  cat <<EOF
+  cat << EOF
 Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
 
 Retrieve detailed information for Kubernetes services in an AKS cluster.
@@ -28,19 +28,19 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-  --help)
-    show_help
-    exit 0
-    ;;
-  *)
-    # Handle positional arguments for resource group and namespace
-    if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
-      RESOURCE_GROUP="$1"
-    elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
-      NAMESPACE="$1"
-    fi
-    shift
-    ;;
+    --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      # Handle positional arguments for resource group and namespace
+      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
+        RESOURCE_GROUP="$1"
+      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
+        NAMESPACE="$1"
+      fi
+      shift
+      ;;
   esac
 done
 
