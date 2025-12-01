@@ -45,11 +45,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -V kubectl &> /dev/null; then
-  "kubectl is not installed or available"
+  echo "kubectl is not installed or available"
+  exit 1
 fi
 
 if ! command -V az &> /dev/null; then
-  "az is not installed or available"
+  echo "az is not installed or available"
+  exit 1
 fi
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
 
