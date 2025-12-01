@@ -21,6 +21,7 @@ OPTIONS:
 EXAMPLES:
   $0                              # Deploy dashboard with admin role to flixtube/default
   $0 --role readonly              # Deploy dashboard with readonly role to flixtube/default
+  $0 --role debug                 # Deploy dashboard with debug role to flixtube/default
   $0 myresourcegroup --role admin # Deploy dashboard with admin role to myresourcegroup/default
   $0 myresourcegroup mynamespace --role readonly  # Deploy dashboard with readonly role
   $0 --help                       # Show this help message
@@ -33,8 +34,8 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --role)
       ROLE="$2"
-      if [[ "$ROLE" != "admin" && "$ROLE" != "readonly" ]]; then
-        echo "Error: --role must be either 'admin' or 'readonly'"
+      if [[ "$ROLE" != "admin" && "$ROLE" != "readonly" && "$ROLE" != "debug" ]]; then
+        echo "Error: --role must be either 'admin', 'debug' or 'readonly'"
         exit 1
       fi
       shift 2
@@ -81,11 +82,16 @@ if [[ "$ROLE" == "admin" ]]; then
   kubectl apply -f dashboard-adminuser.yaml
   USER_NAME="admin-user"
   SECRET_NAME="admin-user"
-else
+elif [[ "$ROLE" == "readonly" ]]; then
   echo "Applying readonly role configuration..."
   kubectl apply -f dashboard-readonlyuser.yaml
   USER_NAME="readonly-user"
   SECRET_NAME="readonly-user"
+else
+  echo "Applying debug role configuration..."
+  kubectl apply -f dashboard-debuguser.yaml
+  USER_NAME="runtime-debug-user"
+  SECRET_NAME="runtime-debug-user"
 fi
 
 kubectl -n kubernetes-dashboard create token "$USER_NAME"
