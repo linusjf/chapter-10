@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo
+set -euo pipefail
 RESOURCE_GROUP="flixtube"
 NAMESPACE="default"
 ROLE="admin"
