@@ -98,4 +98,6 @@ kubectl -n kubernetes-dashboard create token "$USER_NAME"
 
 kubectl get secret "$SECRET_NAME" -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d
 
+echo
+
 kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard 8443:443
