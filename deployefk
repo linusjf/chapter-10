@@ -58,27 +58,27 @@ fi
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
 
 echo "🔹 Creating namespace: ${NAMESPACE}"
-kubectl get ns ${NAMESPACE} >/dev/null 2>&1 || kubectl create ns ${NAMESPACE}
+kubectl get ns "${NAMESPACE}" > /dev/null 2>&1 || kubectl create ns "${NAMESPACE}"
 
 echo "🔹 Deploying Elasticsearch..."
-kubectl -n ${NAMESPACE} apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/elasticsearch/es-statefulset.yaml
-kubectl -n ${NAMESPACE} apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/elasticsearch/es-service.yaml
+kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/elasticsearch/es-statefulset.yaml
+kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/elasticsearch/es-service.yaml
 
 echo "⏳ Waiting for Elasticsearch ready..."
-kubectl -n ${NAMESPACE} rollout status statefulset/elasticsearch --timeout=300s
+kubectl -n "${NAMESPACE}" rollout status statefulset/elasticsearch --timeout=300s
 
 echo "🔹 Deploying Kibana..."
-kubectl -n ${NAMESPACE} apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/kibana/kibana.yaml
+kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/kibana/kibana.yaml
 
 echo "⏳ Waiting for Kibana ready..."
-kubectl -n ${NAMESPACE} rollout status deployment/kibana --timeout=300s
+kubectl -n "${NAMESPACE}" rollout status deployment/kibana --timeout=300s
 
 echo "🔹 Deploying Fluentd DaemonSet..."
-kubectl -n ${NAMESPACE} apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
+kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
 
 echo "⏳ Waiting for Fluentd ready..."
 # Wait for at least one Fluentd pod to be ready
-kubectl -n ${NAMESPACE} wait --for=condition=ready pod \
+kubectl -n "${NAMESPACE}" wait --for=condition=ready pod \
   -l k8s-app=fluentd-logging --timeout=300s
 
 echo "🎉 EFK successfully deployed to '${NAMESPACE}' namespace!"
@@ -89,5 +89,5 @@ echo "Kibana → http://localhost:5601"
 echo "Elasticsearch → http://localhost:9200"
 echo "Press Ctrl+C to stop port-forwarding."
 
-kubectl -n ${NAMESPACE} port-forward svc/kibana 5601:5601 \
+kubectl -n "${NAMESPACE}" port-forward svc/kibana 5601:5601 \
   svc/elasticsearch-logging 9200:9200
