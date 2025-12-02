@@ -5,7 +5,7 @@ RESOURCE_GROUP="${1:-flixtube}"
 NAMESPACE="${2:-default}"
 
 function show_help() {
-  cat << EOF
+  cat <<EOF
 Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
 
 Retrieve logs from Kubernetes pods in an AKS cluster using stern.
@@ -29,29 +29,29 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --help)
-      show_help
-      exit 0
-      ;;
-    *)
-      # Handle positional arguments for resource group and namespace
-      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
-        RESOURCE_GROUP="$1"
-      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
-        NAMESPACE="$1"
-      fi
-      shift
-      ;;
+  --help)
+    show_help
+    exit 0
+    ;;
+  *)
+    # Handle positional arguments for resource group and namespace
+    if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
+      RESOURCE_GROUP="$1"
+    elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
+      NAMESPACE="$1"
+    fi
+    shift
+    ;;
   esac
 done
 
-if ! command -V stern &> /dev/null; then
+if ! command -V stern &>/dev/null; then
   echo "stern is not installed or available"
   echo "Please install stern: https://github.com/stern/stern#installation"
   exit 1
 fi
 
-if ! command -V az &> /dev/null; then
+if ! command -V az &>/dev/null; then
   echo "az is not installed or available"
   exit 1
 fi
@@ -59,7 +59,6 @@ fi
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
 
 echo "Getting logs for all pods in namespace: $NAMESPACE using stern"
-echo "Press Ctrl+C to stop logging"
 echo "--------------------------------------------"
 
-stern --namespace "$NAMESPACE" ".*"
+stern --no-follow --namespace "$NAMESPACE" ".*"
