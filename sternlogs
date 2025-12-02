@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+RESOURCE_GROUP="${1:-flixtube}"
+NAMESPACE="${2:-default}"
+
+function show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
+
+Retrieve logs from Kubernetes pods in an AKS cluster using stern.
+
+ARGUMENTS:
+  RESOURCE_GROUP  Azure resource group name (default: flixtube)
+  NAMESPACE       Kubernetes namespace (default: default)
+
+OPTIONS:
+  --help          Show this help message and exit
+
+EXAMPLES:
+  $0                              # Get logs from flixtube/default using stern
+  $0 myresourcegroup              # Get logs from myresourcegroup/default using stern
+  $0 myresourcegroup mynamespace  # Get logs from myresourcegroup/mynamespace using stern
+  $0 --help                       # Show this help message
+
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      # Handle positional arguments for resource group and namespace
+      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
+        RESOURCE_GROUP="$1"
+      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "default" ]]; then
+        NAMESPACE="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+
+if ! command -V stern &> /dev/null; then
+  echo "stern is not installed or available"
+  echo "Please install stern: https://github.com/stern/stern#installation"
+  exit 1
+fi
+
+if ! command -V az &> /dev/null; then
+  echo "az is not installed or available"
+  exit 1
+fi
+
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
+
+echo "Getting logs for all pods in namespace: $NAMESPACE using stern"
+echo "Press Ctrl+C to stop logging"
+echo "--------------------------------------------"
+
+stern --namespace "$NAMESPACE" ".*"
