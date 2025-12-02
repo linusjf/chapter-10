@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-RESOURCE_GROUP="${1:-flixtube}"
-NAMESPACE="${2:-default}"
+RESOURCE_GROUP="flixtube"
+NAMESPACE="default"
 TOKEN=""
 
 function show_help() {
