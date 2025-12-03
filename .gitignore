@@ -6,3 +6,4 @@ mock-storage/storage
 .aider*
 .secrets
 .env
+*.backup
