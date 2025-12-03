@@ -5,3 +5,4 @@ commit.txt
 mock-storage/storage
 .aider*
 .secrets
+.env

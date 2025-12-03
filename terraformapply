@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# Source .env file if it exists (maintains existing functionality)
+if [ -f .env ]; then
+  source .env
+fi
+
+# Function to display help
+show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS]
+
+Apply Terraform configuration for the FlixTube application.
+
+OPTIONS:
+    --environment ENV    Set the environment (dev, stage, prod)
+    --node_count COUNT   Set the number of nodes (positive integer, 1+)
+    --vm_size SIZE       Set the VM size (string)
+    -h, --help           Show this help message and exit
+
+ENVIRONMENT VARIABLES:
+    The script sources variables from .env file if present.
+    Command line --environment takes precedence over .env file.
+
+EXAMPLES:
+    $0 --environment prod
+    $0 --environment dev
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --environment)
+      ENVIRONMENT="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --node_count)
+      NODE_COUNT="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --vm_size)
+      VM_SIZE="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      show_help
+      exit 1
+      ;;
+  esac
+done
+
+# Export ENVIRONMENT variable
+export ENVIRONMENT
+
+# Build terraform command with conditional variables
+TERRAFORM_CMD="terraform apply -auto-approve \
+  -var \"app_version=$VERSION\" \
+  -var \"client_id=$ARM_CLIENT_ID\" \
+  -var \"client_secret=$ARM_CLIENT_SECRET\" \
+  -var \"environment=$ENVIRONMENT\" \
+  -var \"storage_account_name=$STORAGE_ACCOUNT_NAME\" \
+  -var \"storage_access_key=$STORAGE_ACCESS_KEY\""
+
+# Add node_count only if not empty
+if [ -n "$NODE_COUNT" ]; then
+  TERRAFORM_CMD="$TERRAFORM_CMD -var \"node_count=$NODE_COUNT\""
+fi
+
+# Add vm_size only if not empty
+if [ -n "$VM_SIZE" ]; then
+  TERRAFORM_CMD="$TERRAFORM_CMD -var \"vm_size=$VM_SIZE\""
+fi
+
+terraform init
+eval $TERRAFORM_CMD
