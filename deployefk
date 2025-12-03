@@ -3,91 +3,114 @@ set -euo pipefail
 
 RESOURCE_GROUP="${1:-flixtube}"
 NAMESPACE="${2:-logging}"
+CLUSTER_NAME="${RESOURCE_GROUP}" # Defaults cluster name to resource group name
 
 function show_help() {
-  cat << EOF
-Usage: $0 [OPTIONS] [RESOURCE_GROUP] [NAMESPACE]
-
-Deploy EFK (Elasticsearch, Fluentd, Kibana) stack to an AKS cluster.
-
-ARGUMENTS:
-  RESOURCE_GROUP  Azure resource group name (default: flixtube)
-  NAMESPACE       Kubernetes namespace for EFK deployment (default: logging)
-
-OPTIONS:
-  --help          Show this help message and exit
-
-EXAMPLES:
-  $0                              # Deploy EFK to flixtube/logging
-  $0 myresourcegroup              # Deploy EFK to myresourcegroup/logging
-  $0 myresourcegroup mynamespace  # Deploy EFK to myresourcegroup/mynamespace
-  $0 --help                       # Show this help message
-
-EOF
+  echo "Deploy EFK (Elasticsearch + Fluentd + Kibana) to AKS"
+  echo "Usage: $0 [RESOURCE_GROUP] [NAMESPACE]"
+  exit 0
 }
 
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --help)
-      show_help
-      exit 0
-      ;;
-    *)
-      # Handle positional arguments for resource group and namespace
-      if [[ -z "$RESOURCE_GROUP" ]] || [[ "$RESOURCE_GROUP" == "flixtube" ]]; then
-        RESOURCE_GROUP="$1"
-      elif [[ -z "$NAMESPACE" ]] || [[ "$NAMESPACE" == "logging" ]]; then
-        NAMESPACE="$1"
-      fi
-      shift
-      ;;
-  esac
+if [[ "${1:-}" == "--help" ]]; then show_help; fi
+
+for cmd in kubectl az helm; do
+  command -v $cmd > /dev/null || {
+    echo "$cmd missing"
+    exit 1
+  }
 done
 
-if ! command -V kubectl &> /dev/null; then
-  echo "kubectl is not installed or available"
-  exit 1
-fi
+echo "⛓ Connecting to AKS: $RESOURCE_GROUP/$CLUSTER_NAME ..."
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
 
-if ! command -V az &> /dev/null; then
-  echo "az is not installed or available"
-  exit 1
-fi
+echo "🔧 Creating namespace: $NAMESPACE ..."
+kubectl get ns "$NAMESPACE" > /dev/null 2>&1 || kubectl create ns "$NAMESPACE"
 
-az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$RESOURCE_GROUP"
+echo "⚙️ Ensuring vm.max_map_count is correct on all nodes..."
+kubectl apply -f - << EOF
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: sysctl-setter
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: sysctl-setter
+  template:
+    metadata:
+      labels:
+        name: sysctl-setter
+    spec:
+      hostPID: true
+      initContainers:
+      - name: set-sysctl
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          sysctl -w vm.max_map_count=262144
+          echo "vm.max_map_count set to \$(sysctl -n vm.max_map_count)"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-sys
+          mountPath: /host-sys
+      containers:
+      - name: dummy
+        image: busybox
+        command: ["sleep", "3600"]
+      volumes:
+      - name: host-sys
+        hostPath:
+          path: /sys
+EOF
 
-echo "🔹 Creating namespace: ${NAMESPACE}"
-kubectl get ns "${NAMESPACE}" > /dev/null 2>&1 || kubectl create ns "${NAMESPACE}"
+kubectl rollout status daemonset/sysctl-setter -n kube-system --timeout=200s
 
-echo "🔹 Deploying Elasticsearch..."
-kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/elasticsearch/es-statefulset.yaml
-kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/elasticsearch/es-service.yaml
+echo "📦 Adding Bitnami repo ..."
+helm repo add bitnami https://charts.bitnami.com/bitnami || true
+helm repo update
 
-echo "⏳ Waiting for Elasticsearch ready..."
-kubectl -n "${NAMESPACE}" rollout status statefulset/elasticsearch --timeout=300s
+echo "📌 Deploying Elasticsearch (dev mode, no persistence)"
+helm upgrade --install elasticsearch bitnami/elasticsearch \
+  --namespace logging \
+  --version 19.5.10 \
+  --set master.replicas=1 \
+  --set data.replicas=1 \
+  --set master.persistence.enabled=false \
+  --set data.persistence.enabled=false \
+  --set volumePermissions.enabled=true \
+  --set image.tag=7.17.10-debian-11-r106 \
+  --set sysctlImage.tag=11-debian-11-r106
 
-echo "🔹 Deploying Kibana..."
-kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/kibana/kibana.yaml
+echo "⏳ Waiting for ES to be Ready..."
+kubectl -n "$NAMESPACE" rollout status statefulset/elasticsearch-master --timeout=400s
 
-echo "⏳ Waiting for Kibana ready..."
-kubectl -n "${NAMESPACE}" rollout status deployment/kibana --timeout=300s
+echo "📌 Deploying Kibana ..."
+helm upgrade --install kibana bitnami/kibana \
+  --namespace "$NAMESPACE" \
+  --set elasticsearch.hosts="{elasticsearch-master}"
 
-echo "🔹 Deploying Fluentd DaemonSet..."
-kubectl -n "${NAMESPACE}" apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
+echo "⏳ Waiting for Kibana Ready..."
+kubectl -n "$NAMESPACE" rollout status deployment/kibana --timeout=400s
 
-echo "⏳ Waiting for Fluentd ready..."
-# Wait for at least one Fluentd pod to be ready
-kubectl -n "${NAMESPACE}" wait --for=condition=ready pod \
-  -l k8s-app=fluentd-logging --timeout=300s
+echo "📌 Deploying Fluentd DaemonSet ..."
+kubectl -n "$NAMESPACE" apply -f \
+  https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
 
-echo "🎉 EFK successfully deployed to '${NAMESPACE}' namespace!"
+kubectl -n "$NAMESPACE" wait \
+  --for=condition=ready pod -l k8s-app=fluentd-logging --timeout=300s
 
-# Optional automatic port-forwarding
-echo "🚪 Port-forwarding services..."
-echo "Kibana → http://localhost:5601"
-echo "Elasticsearch → http://localhost:9200"
-echo "Press Ctrl+C to stop port-forwarding."
+echo "✨ EFK successfully deployed to '$NAMESPACE' namespace!"
 
-kubectl -n "${NAMESPACE}" port-forward svc/kibana 5601:5601 \
-  svc/elasticsearch-logging 9200:9200
+echo
+echo "🚪 Port-forwarding for local access..."
+echo "  Kibana → http://localhost:5601"
+echo "  Elasticsearch → http://localhost:9200"
+echo "Press CTRL+C to stop"
+echo
+
+kubectl -n "$NAMESPACE" port-forward svc/kibana 5601:5601 \
+  svc/elasticsearch-master 9200:9200

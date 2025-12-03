@@ -7,3 +7,7 @@ mock-storage/storage
 .secrets
 .env
 *.backup
+.terraform/
+*.tfstate
+*.hcl
+*.info
