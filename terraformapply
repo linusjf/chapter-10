@@ -5,6 +5,9 @@ if [ -f .env ]; then
   source .env
 fi
 
+# Default value for deploy_efk
+DEPLOY_EFK="false"
+
 # Function to display help
 show_help() {
   cat << EOF
@@ -16,6 +19,7 @@ OPTIONS:
     --environment ENV    Set the environment (dev, stage, prod)
     --node_count COUNT   Set the number of nodes (positive integer, 1+)
     --vm_size SIZE       Set the VM size (string)
+    --deploy-efk         Deploy EFK stack (default: false)
     -h, --help           Show this help message and exit
 
 ENVIRONMENT VARIABLES:
@@ -25,6 +29,7 @@ ENVIRONMENT VARIABLES:
 EXAMPLES:
     $0 --environment prod
     $0 --environment dev
+    $0 --environment dev --deploy-efk
 EOF
 }
 
@@ -45,6 +50,10 @@ while [[ $# -gt 0 ]]; do
       VM_SIZE="$2"
       shift # past argument
       shift # past value
+      ;;
+    --deploy-efk)
+      DEPLOY_EFK="true"
+      shift # past argument
       ;;
     -h | --help)
       show_help
@@ -68,7 +77,8 @@ TERRAFORM_CMD="terraform apply -auto-approve \
   -var \"client_secret=$ARM_CLIENT_SECRET\" \
   -var \"environment=$ENVIRONMENT\" \
   -var \"storage_account_name=$STORAGE_ACCOUNT_NAME\" \
-  -var \"storage_access_key=$STORAGE_ACCESS_KEY\""
+  -var \"storage_access_key=$STORAGE_ACCESS_KEY\" \
+  -var \"deploy_efk=$DEPLOY_EFK\""
 
 # Add node_count only if not empty
 if [ -n "$NODE_COUNT" ]; then
