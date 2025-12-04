@@ -15,7 +15,6 @@ resource "azurerm_kubernetes_cluster" "cluster" {
     auto_scaling_enabled  = true
     min_count             = 1
     max_count             = 20
-    node_count            = var.node_count
     vm_size               = var.vm_size
   }
 
