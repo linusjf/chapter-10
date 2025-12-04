@@ -55,3 +55,9 @@ variable node_count {
     error_message = "node_count must be 1 or more."
   }
 }
+
+variable "deploy_efk" {
+  type        = bool
+  default     = false
+  description = "Deploy EFK logging stack"
+}
