@@ -1,8 +1,7 @@
 resource "null_resource" "update_kubeconfig" {
   triggers = {
-    cluster_id = azurerm_kubernetes_cluster.cluster.id
+    host = azurerm_kubernetes_cluster.cluster.kube_config.0.host
   }
-
   provisioner "local-exec" {
     command = <<EOF
 az aks get-credentials \
