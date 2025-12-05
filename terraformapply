@@ -10,7 +10,7 @@ DEPLOY_EFK="false"
 
 # Function to display help
 show_help() {
-  cat << EOF
+  cat <<EOF
 Usage: $0 [OPTIONS]
 
 Apply Terraform configuration for the FlixTube application.
@@ -36,34 +36,34 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --environment)
-      ENVIRONMENT="$2"
-      shift # past argument
-      shift # past value
-      ;;
-    --node_count)
-      NODE_COUNT="$2"
-      shift # past argument
-      shift # past value
-      ;;
-    --vm_size)
-      VM_SIZE="$2"
-      shift # past argument
-      shift # past value
-      ;;
-    --deploy-efk)
-      DEPLOY_EFK="true"
-      shift # past argument
-      ;;
-    -h | --help)
-      show_help
-      exit 0
-      ;;
-    *)
-      echo "Unknown option: $1"
-      show_help
-      exit 1
-      ;;
+  --environment)
+    ENVIRONMENT="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  --node_count)
+    NODE_COUNT="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  --vm_size)
+    VM_SIZE="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  --deploy-efk)
+    DEPLOY_EFK="true"
+    shift # past argument
+    ;;
+  -h | --help)
+    show_help
+    exit 0
+    ;;
+  *)
+    echo "Unknown option: $1"
+    show_help
+    exit 1
+    ;;
   esac
 done
 
@@ -78,7 +78,8 @@ TERRAFORM_CMD="terraform apply -auto-approve \
   -var \"environment=$ENVIRONMENT\" \
   -var \"storage_account_name=$STORAGE_ACCOUNT_NAME\" \
   -var \"storage_access_key=$STORAGE_ACCESS_KEY\" \
-  -var \"deploy_efk=$DEPLOY_EFK\""
+  -var \"deploy_efk=$DEPLOY_EFK\" \
+  -var \"ec_api_key=$ELASTIC_CLOUD_API_KEY\""
 
 # Add node_count only if not empty
 if [ -n "$NODE_COUNT" ]; then

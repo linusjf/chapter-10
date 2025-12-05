@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 2.11.0"
     }
+    ec = {
+      source  = "elastic/ec"
+      version = ">= 0.9.0"
+    }
   }
 
   required_version = ">= 1.5.6"
@@ -17,4 +21,9 @@ terraform {
 
 provider "azurerm" {
   features {}
+}
+
+# Elastic Cloud provider – uses an API key from a variable
+provider "ec" {
+  apikey = var.ec_api_key
 }

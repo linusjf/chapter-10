@@ -61,3 +61,30 @@ variable "deploy_efk" {
   default     = false
   description = "Deploy EFK logging stack"
 }
+
+variable "ec_api_key" {
+  description = "Elastic Cloud API key with permissions to manage deployments"
+  type        = string
+  sensitive   = true
+}
+
+# Region & template for Elastic Cloud
+variable "ec_region" {
+  description = "Elastic Cloud region (see Elastic docs for valid values)"
+  type        = string
+  # Pick something close to you, adjust as needed
+  default     = "aws-ap-south-1"
+}
+
+variable "ec_deployment_template_id" {
+  description = "Elastic Cloud deployment template id"
+  type        = string
+  # Common generic template; adjust to your provider/region
+  default     = "aws-io-optimized-v2"
+}
+
+variable "ec_version" {
+  description = "Elastic Stack version for the deployment"
+  type        = string
+  default     = "8.15.0"
+}

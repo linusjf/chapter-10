@@ -5,3 +5,4 @@ export ARM_SUBSCRIPTION_ID="xxx"
 export STORAGE_ACCOUNT_NAME=
 export STORAGE_ACCESS_KEY=
 export ENVIRONMENT=development
+export ELASTIC_CLOUD_API_KEY="xxx"
