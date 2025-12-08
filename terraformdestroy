@@ -10,7 +10,7 @@ DEPLOY_EFK="false"
 
 # Function to display help
 show_help() {
-  cat <<EOF
+  cat << EOF
 Usage: $0 [OPTIONS]
 
 Destroy Terraform configuration for the FlixTube application.
@@ -36,34 +36,34 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-  --environment)
-    ENVIRONMENT="$2"
-    shift # past argument
-    shift # past value
-    ;;
-  --node_count)
-    NODE_COUNT="$2"
-    shift # past argument
-    shift # past value
-    ;;
-  --vm_size)
-    VM_SIZE="$2"
-    shift # past argument
-    shift # past value
-    ;;
-  --deploy-efk)
-    DEPLOY_EFK="true"
-    shift # past argument
-    ;;
-  -h | --help)
-    show_help
-    exit 0
-    ;;
-  *)
-    echo "Unknown option: $1"
-    show_help
-    exit 1
-    ;;
+    --environment)
+      ENVIRONMENT="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --node_count)
+      NODE_COUNT="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --vm_size)
+      VM_SIZE="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --deploy-efk)
+      DEPLOY_EFK="true"
+      shift # past argument
+      ;;
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      show_help
+      exit 1
+      ;;
   esac
 done
 
@@ -90,4 +90,4 @@ if [ -n "$VM_SIZE" ]; then
   TERRAFORM_CMD="$TERRAFORM_CMD -var \"vm_size=$VM_SIZE\""
 fi
 
-eval $TERRAFORM_CMD
+eval "$TERRAFORM_CMD"
