@@ -1,60 +1,4 @@
-# Sets global variables for this Terraform project.
-variable environment {
-  type = string
-  description = "Environment short name (dev, stage, prod)"
-}
-
-locals {
-  app_name = "flixtube-${var.environment}"
-}
-
-variable location {
-  type = string
-  default = "eastus"
-}
-
-variable kubernetes_version {
-  type = string
-  default = "1.31.1"
-}
-
-variable container_registry_name {
-  type = string
-  default = "linusjfflixtube"
-}
-
-variable client_id {
-  type = string
-}
-
-variable client_secret {
-  type = string
-}
-
-variable app_version {
-}
-
-variable storage_account_name {
-  type = string
-}
-
-variable storage_access_key {
-}
-
-variable vm_size {
-  type = string
-  default = "Standard_A2_v2"
-}
-
-variable node_count {
-  type = number
-  default = 1
-
-  validation {
-    condition     = var.node_count > 0
-    error_message = "node_count must be 1 or more."
-  }
-}
+# Global Terraform variables for this project
 
 variable "deploy_efk" {
   type        = bool
@@ -62,29 +6,71 @@ variable "deploy_efk" {
   description = "Deploy EFK logging stack"
 }
 
-variable "ec_api_key" {
-  description = "Elastic Cloud API key with permissions to manage deployments"
+variable "environment" {
   type        = string
-  sensitive   = true
+  description = "Environment short name (dev, stage, prod)"
 }
 
-# Region & template for Elastic Cloud
-variable "ec_region" {
-  description = "Elastic Cloud region (see Elastic docs for valid values)"
-  type        = string
-  # Pick something close to you, adjust as needed
-  default     = "aws-ap-south-1"
+locals {
+  app_name = "flixtube-${var.environment}"
 }
 
-variable "ec_deployment_template_id" {
-  description = "Elastic Cloud deployment template id"
-  type        = string
-  # Common generic template; adjust to your provider/region
-  default     = "aws-io-optimized-v2"
+# Default vm_size can be overridden, but changes based on deploy_efk if user doesn't specify
+variable "vm_size" {
+  type = string
+  default = ""
 }
 
-variable "ec_version" {
-  description = "Elastic Stack version for the deployment"
-  type        = string
-  default     = "8.15.0"
+locals {
+  computed_vm_size = (
+    var.vm_size != "" ?
+    var.vm_size :
+    (var.deploy_efk ? "Standard_D3_v2" : "Standard_A2_v2")
+  )
+}
+
+variable "location" {
+  type    = string
+  default = "eastus"
+}
+
+variable "kubernetes_version" {
+  type    = string
+  default = "1.31.1"
+}
+
+variable "container_registry_name" {
+  type    = string
+  default = "linusjfflixtube"
+}
+
+variable "client_id" {
+  type = string
+}
+
+variable "client_secret" {
+  type = string
+}
+
+variable "app_version" {
+  type = string
+  default = "latest"
+}
+
+variable "storage_account_name" {
+  type = string
+}
+
+variable "storage_access_key" {
+  type = string
+}
+
+variable "node_count" {
+  type    = number
+  default = 1
+
+  validation {
+    condition     = var.node_count > 0
+    error_message = "node_count must be 1 or more."
+  }
 }

@@ -78,8 +78,7 @@ TERRAFORM_CMD="terraform apply -auto-approve \
   -var \"environment=$ENVIRONMENT\" \
   -var \"storage_account_name=$STORAGE_ACCOUNT_NAME\" \
   -var \"storage_access_key=$STORAGE_ACCESS_KEY\" \
-  -var \"deploy_efk=$DEPLOY_EFK\" \
-  -var \"ec_api_key=$ELASTIC_CLOUD_API_KEY\""
+  -var \"deploy_efk=$DEPLOY_EFK\""
 
 # Add node_count only if not empty
 if [ -n "$NODE_COUNT" ]; then
